@@ -1,0 +1,5 @@
+# dsh-approval-popup bundle patch: one Loader row. The browser half is picked up
+# from this package's `dsh.client` declaration.
+- insert:
+    - id: approval-popup
+      name: dsh-approval-popup

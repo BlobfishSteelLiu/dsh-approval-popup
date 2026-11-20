@@ -1,0 +1,58 @@
+import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
+
+process.env.SystemRoot = 'Z:\\dsh-approval-popup-missing';
+process.env.DSH_HOME = 'E:\\DSH\\_approval_test_home';
+const { apply, name, inject } = await import('../lib/index.js');
+
+assert.equal(name, 'dsh-approval-popup');
+assert.deepEqual([...inject], ['webServer']);
+
+function install() {
+  let route;
+  const listeners = [];
+  const ctx = {
+    webServer: { register(value) { route = value; return () => {}; } },
+    effect(fn) { return fn(); },
+    on(event, listener, options) { listeners.push({ event, listener, options }); return () => {}; }
+  };
+  apply(ctx);
+  return { route, listeners };
+}
+
+const native = install();
+assert.ok(native.route, 'bridge route registered');
+assert.equal(native.route.path, '/dsh-approval-popup');
+assert.equal(native.route.kind, 'prefix');
+assert.equal(native.route.handler.length >= 2, true);
+assert.equal(native.listeners.length, 1);
+assert.equal(native.listeners[0].event, 'approval/request');
+assert.equal(native.listeners[0].options?.prepend, true);
+
+function call(route, url, body) {
+  return new Promise((resolve) => {
+    const req = new EventEmitter();
+    req.method = 'POST';
+    req.url = url;
+    req.socket = { remoteAddress: '127.0.0.1' };
+    req.destroy = () => {};
+    const res = {
+      status: 0,
+      value: undefined,
+      writeHead(status) { this.status = status; },
+      end(value) { this.value = JSON.parse(value); resolve(this); }
+    };
+    route.handler(req, res);
+    req.emit('data', Buffer.from(JSON.stringify(body)));
+    req.emit('end');
+  });
+}
+
+const settings = await call(native.route, '/dsh-approval-popup/settings/get', {});
+assert.equal(settings.status, 200);
+assert.equal(settings.value.ok, true);
+assert.equal(settings.value.settings.enabled, true);
+assert.equal(settings.value.settings.delete, true);
+assert.equal(settings.value.settings.accent, 'deepBlue');
+
+console.log('host approval owner test passed');

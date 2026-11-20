@@ -1,0 +1,5 @@
+node_modules/
+*.tgz
+.npm-cache/
+_dialog_shot/
+_npm_install_test/

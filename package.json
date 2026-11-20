@@ -1,0 +1,64 @@
+{
+  "name": "dsh-approval-popup",
+  "version": "1.1.2",
+  "description": "Shows DeepSeek Harness sandbox permission escalations as a global in-app modal and a native Windows dialog, with semantic high-risk detection and per-category switches.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./client/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "client",
+    "cordis.patch.yml",
+    "locale",
+    "icon.svg",
+    "LICENSE",
+    "README.md"
+  ],
+  "os": [
+    "win32"
+  ],
+  "engines": {
+    "dsh": ">=0.2.0-rc.2",
+    "node": ">=22"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "approval",
+    "permission",
+    "sandbox",
+    "windows"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BlobfishSteelLiu/dsh-approval-popup.git"
+  },
+  "homepage": "https://github.com/BlobfishSteelLiu/dsh-approval-popup#readme",
+  "bugs": {
+    "url": "https://github.com/BlobfishSteelLiu/dsh-approval-popup/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
