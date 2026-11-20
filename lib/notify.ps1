@@ -31,7 +31,33 @@ public static class DshToastNative {
     [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint attach, uint attachTo, bool on);
     [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr hWnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
+    [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern bool GetWindowPlacement(IntPtr hWnd, ref DshWindowPlacement placement);
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct DshPoint {
+    public int X;
+    public int Y;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct DshRect {
+    public int Left;
+    public int Top;
+    public int Right;
+    public int Bottom;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct DshWindowPlacement {
+    public uint length;
+    public uint flags;
+    public uint showCmd;
+    public DshPoint ptMinPosition;
+    public DshPoint ptMaxPosition;
+    public DshRect rcNormalPosition;
 }
 '@
 
@@ -98,7 +124,7 @@ public class DshToastForm : Form {
 
     protected override void OnResize(EventArgs e) {
         base.OnResize(e);
-        using (var path = DshToastUi.RoundRect(new Rectangle(0, 0, Width, Height), 18)) {
+        using (var path = DshToastUi.RoundRect(new Rectangle(0, 0, Width, Height), 24)) {
             var old = Region;
             Region = new Region(path);
             if (old != null) old.Dispose();
@@ -118,37 +144,47 @@ public class DshToastForm : Form {
             e.Graphics.ResetClip();
         }
 
-        int badgeX = 28;
-        int badgeY = 50;
-        using (var badge = new SolidBrush(AccentColor)) e.Graphics.FillEllipse(badge, badgeX, badgeY, 46, 46);
-        using (var glyphPen = new Pen(AccentTextColor, 3.4f)) {
-            float x = badgeX + 23f;
-            e.Graphics.DrawLine(glyphPen, x, badgeY + 12f, x, badgeY + 25f);
-            using (var dot = new SolidBrush(AccentTextColor)) e.Graphics.FillEllipse(dot, x - 3f, badgeY + 31f, 6, 6);
+        int padX = 52;
+        int textX = 120;
+        int contentRight = Width - 56;
+        int titleY = 40;
+        int titleH = TitleFont.Height + 10;
+        int bodyH = BodyFont.Height + 8;
+        int smallH = SmallFont.Height + 6;
+        int bodyY = titleY + titleH + 2;
+        int toolY = bodyY + bodyH + 2;
+        int hintY = toolY + smallH + 2;
+        int badgeX = padX;
+        int badgeY = titleY + 8;
+        using (var badge = new SolidBrush(AccentColor)) e.Graphics.FillEllipse(badge, badgeX, badgeY, 52, 52);
+        using (var glyphPen = new Pen(AccentTextColor, 3.8f)) {
+            float x = badgeX + 26f;
+            e.Graphics.DrawLine(glyphPen, x, badgeY + 14f, x, badgeY + 29f);
+            using (var dot = new SolidBrush(AccentTextColor)) e.Graphics.FillEllipse(dot, x - 3.5f, badgeY + 35f, 7, 7);
         }
 
-        int textX = 92;
-        int titleWidth = Width - textX - 28;
+        int titleWidth = contentRight - textX;
         using (var closePen = new Pen(MutedColor, 1.8f)) {
-            e.Graphics.DrawLine(closePen, Width - 40, 28, Width - 26, 42);
-            e.Graphics.DrawLine(closePen, Width - 26, 28, Width - 40, 42);
+            e.Graphics.DrawLine(closePen, Width - 52, 42, Width - 38, 56);
+            e.Graphics.DrawLine(closePen, Width - 38, 42, Width - 52, 56);
         }
 
         if (HighRisk && HighRiskLabel != "") {
-            int pillWidth = 126;
-            int pillX = Width - pillWidth - 56;
-            int pillY = 26;
-            using (var pillPath = DshToastUi.RoundRect(new Rectangle(pillX, pillY, pillWidth, 34), 17)) {
+            int pillHeight = PillFont.Height + 10;
+            int pillWidth = TextRenderer.MeasureText(HighRiskLabel, PillFont).Width + 28;
+            int pillX = Width - pillWidth - 72;
+            int pillY = titleY;
+            using (var pillPath = DshToastUi.RoundRect(new Rectangle(pillX, pillY, pillWidth, pillHeight), pillHeight / 2)) {
                 using (var pillBrush = new SolidBrush(AccentColor)) e.Graphics.FillPath(pillBrush, pillPath);
             }
-            TextRenderer.DrawText(e.Graphics, HighRiskLabel, PillFont, new Rectangle(pillX, pillY, pillWidth, 34), AccentTextColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
-            titleWidth = pillX - textX - 14;
+            TextRenderer.DrawText(e.Graphics, HighRiskLabel, PillFont, new Rectangle(pillX, pillY, pillWidth, pillHeight), AccentTextColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+            titleWidth = pillX - textX - 16;
         }
 
-        TextRenderer.DrawText(e.Graphics, Header, TitleFont, new Rectangle(textX, 28, titleWidth, 42), TextColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
-        TextRenderer.DrawText(e.Graphics, Conversation, BodyFont, new Rectangle(textX, 76, Width - textX - 28, 38), TextColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
-        TextRenderer.DrawText(e.Graphics, Tool, SmallFont, new Rectangle(textX, 120, Width - textX - 28, 30), MutedColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
-        TextRenderer.DrawText(e.Graphics, Hint, SmallFont, new Rectangle(textX, 154, Width - textX - 28, 30), HighRisk ? AccentColor : MutedColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+        TextRenderer.DrawText(e.Graphics, Header, TitleFont, new Rectangle(textX, titleY, titleWidth, titleH), TextColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+        TextRenderer.DrawText(e.Graphics, Conversation, BodyFont, new Rectangle(textX, bodyY, contentRight - textX, bodyH), TextColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+        TextRenderer.DrawText(e.Graphics, Tool, SmallFont, new Rectangle(textX, toolY, contentRight - textX, smallH), MutedColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+        TextRenderer.DrawText(e.Graphics, Hint, SmallFont, new Rectangle(textX, hintY, contentRight - textX, smallH), HighRisk ? AccentColor : MutedColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
     }
 }
 '@
@@ -162,7 +198,7 @@ public class DshToastForm : Form {
 
     $fontName = if ($payload.lang -eq 'zh') { 'Microsoft YaHei UI' } else { 'Segoe UI' }
     $form = New-Object DshToastForm
-    $form.ClientSize = New-Object System.Drawing.Size(740, 220)
+    $form.ClientSize = New-Object System.Drawing.Size(980, 292)
     $form.AccentColor = $accent
     $form.AccentTextColor = $accentText
     $form.SurfaceColor = $surface
@@ -207,12 +243,23 @@ public class DshToastForm : Form {
     $finalTop = $workArea.Bottom - $form.Height - 16
     $form.Location = New-Object System.Drawing.Point(($workArea.Right + 4), $finalTop)
 
+    function Test-Maximized([IntPtr]$handle) {
+        if ([DshToastNative]::IsZoomed($handle)) { return $true }
+        $placement = New-Object DshWindowPlacement
+        $placement.length = [System.Runtime.InteropServices.Marshal]::SizeOf($placement)
+        if ([DshToastNative]::GetWindowPlacement($handle, [ref]$placement)) {
+            return (($placement.showCmd -eq 3) -or (($placement.flags -band 2) -ne 0))
+        }
+        return $false
+    }
+
     function Activate-Dsh {
         $activated = $false
         try {
             $process = Get-Process -Id ([int]$payload.dshPid) -ErrorAction Stop
             if ($process.MainWindowHandle -ne [IntPtr]::Zero) {
-                [void][DshToastNative]::ShowWindow($process.MainWindowHandle, 9)
+                $showCommand = if (Test-Maximized $process.MainWindowHandle) { 3 } else { 9 }
+                [void][DshToastNative]::ShowWindow($process.MainWindowHandle, $showCommand)
                 [void][DshToastNative]::SetForegroundWindow($process.MainWindowHandle)
                 $activated = $true
             }
@@ -224,7 +271,8 @@ public class DshToastForm : Form {
                     Where-Object { $_.MainWindowHandle -ne [IntPtr]::Zero } |
                     Select-Object -First 1
                 if ($null -ne $process) {
-                    [void][DshToastNative]::ShowWindow($process.MainWindowHandle, 9)
+                    $showCommand = if (Test-Maximized $process.MainWindowHandle) { 3 } else { 9 }
+                    [void][DshToastNative]::ShowWindow($process.MainWindowHandle, $showCommand)
                     [void][DshToastNative]::SetForegroundWindow($process.MainWindowHandle)
                     $activated = $true
                 }
@@ -280,7 +328,7 @@ public class DshToastForm : Form {
     $form.Add_MouseDown({
         param($sender, $eventArgs)
         $timer.Stop()
-        if ($eventArgs.X -ge ($form.Width - 56) -and $eventArgs.Y -le 56) {
+        if ($eventArgs.X -ge ($form.Width - 68) -and $eventArgs.Y -le 80) {
             $form.Close()
             return
         }

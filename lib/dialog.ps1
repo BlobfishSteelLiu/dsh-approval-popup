@@ -25,6 +25,9 @@ public static class DshApprovalNative {
     [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern IntPtr SetActiveWindow(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern IntPtr SetFocus(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll", EntryPoint = "SetClassLongPtrW")] public static extern IntPtr SetClassLongPtr(IntPtr hWnd, int index, IntPtr value);
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern int SetCurrentProcessExplicitAppUserModelID(string appID);
 }
 '@
 
@@ -52,6 +55,7 @@ public static class DshUi {
 }
 
 public class DshApprovalForm : Form {
+    public DshApprovalForm(Icon icon) : this() { Icon = icon; ShowIcon = true; }
     public Func<Keys, bool> KeyInterceptor;
     public Color AccentColor = Color.FromArgb(37, 99, 235);
     public Color SurfaceColor = Color.FromArgb(248, 250, 252);
@@ -259,7 +263,19 @@ public class DshRoundButton : Button {
     $valueFont = New-Object System.Drawing.Font($fontName, 9.5, [System.Drawing.FontStyle]::Regular)
     $buttonFont = New-Object System.Drawing.Font($fontName, 9.5, [System.Drawing.FontStyle]::Bold)
 
-    $form = New-Object DshApprovalForm
+    [void][DshApprovalNative]::SetCurrentProcessExplicitAppUserModelID('BlobfishSteelLiu.DshApprovalPopup')
+
+    $formIcon = $null
+    $iconPath = Join-Path $PSScriptRoot 'icon.ico'
+    if (Test-Path $iconPath) {
+        try { $formIcon = [System.Drawing.Icon]::new($iconPath, 256, 256) } catch { }
+    }
+    if ($null -ne $formIcon) {
+        $form = [DshApprovalForm]::new($formIcon)
+    }
+    else {
+        $form = New-Object DshApprovalForm
+    }
     $form.Text = [string]$payload.title
     $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96)
@@ -273,11 +289,8 @@ public class DshRoundButton : Button {
     $form.Location = New-Object System.Drawing.Point($left, $top)
     $form.ShowInTaskbar = $true
     $form.TopMost = $true
+    $form.ShowIcon = $true
     $form.Font = $subtitleFont
-    $iconPath = Join-Path $PSScriptRoot 'icon.ico'
-    if (Test-Path $iconPath) {
-        try { $form.Icon = New-Object System.Drawing.Icon($iconPath) } catch { }
-    }
     $form.AccentColor = $accent
     $form.SurfaceColor = $surface
     $form.BorderColor = $border
@@ -553,6 +566,12 @@ public class DshRoundButton : Button {
 
     $form.Add_Shown({
         [void][DshApprovalNative]::ShowWindow($form.Handle, 5)
+        if ($null -ne $formIcon) {
+            [void][DshApprovalNative]::SendMessage($form.Handle, 0x80, [IntPtr]::new(1), $formIcon.Handle)
+            [void][DshApprovalNative]::SendMessage($form.Handle, 0x80, [IntPtr]::new(0), $formIcon.Handle)
+            [void][DshApprovalNative]::SetClassLongPtr($form.Handle, -14, $formIcon.Handle)
+            [void][DshApprovalNative]::SetClassLongPtr($form.Handle, -34, $formIcon.Handle)
+        }
         Force-Foreground
         $rejectButton.Focus()
         $topmostTimer.Start()
