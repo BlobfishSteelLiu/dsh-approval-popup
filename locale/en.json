@@ -1,6 +1,7 @@
 {
   "meta": {
     "title": "Approval popup",
-    "description": "Shows sandbox permission escalations as a global in-app modal and a native Windows dialog, with semantic high-risk detection and per-category switches. Windows only; settings are under Settings → Permission approvals."
+    "description": "Shows sandbox permission escalations as a global in-app modal and a native Windows dialog, with semantic high-risk detection and per-category switches. Windows only; settings are under Settings → Permission approvals.",
+    "detail": "docs/DETAIL.md"
   }
 }
