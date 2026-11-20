@@ -1,6 +1,6 @@
 {
   "name": "dsh-approval-popup",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Shows DeepSeek Harness sandbox permission escalations as a global in-app modal and a native Windows dialog, with semantic high-risk detection and per-category switches.",
   "type": "module",
   "main": "lib/index.js",
@@ -49,6 +49,7 @@
     "windows"
   ],
   "license": "MIT",
+  "author": "BlobfishSteelLiu <blobfish_steel_liu@qq.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BlobfishSteelLiu/dsh-approval-popup.git"

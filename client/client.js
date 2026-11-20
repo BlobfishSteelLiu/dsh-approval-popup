@@ -62,7 +62,18 @@ window.__ModuleLoader__.load({
 			"settings.color.amber": "琥珀黄",
 			"settings.color.alertRed": "警示红",
 			"settings.colorDefault": "默认",
-			"settings.colorHint": "高危请求固定使用警示红，不可修改。"
+			"settings.colorHint": "高危请求固定使用警示红，不可修改。",
+			"settings.outside": "应用外申请推送",
+			"settings.outside.off": "关闭",
+			"settings.outside.offDesc": "不显示任何应用外提示，回到应用后再处理。",
+			"settings.outside.notification": "系统通知",
+			"settings.outside.notificationDesc": "右下角滑入通知，点击切回 DSH；不直接审批，会自动消失。",
+			"settings.outside.window": "顶级窗口",
+			"settings.outside.windowDesc": "弹出可审批的原生窗口。",
+			"settings.disableHighRiskTitle": "关闭高危识别？",
+			"settings.disableHighRiskBody": "关闭后，所有权限请求都会按常规处理：不再标红、不再禁用键盘批准，也不区分高危类别。",
+			"settings.cancel": "取消",
+			"settings.confirmDisable": "确认关闭"
 		};
 
 		const en = {
@@ -111,7 +122,18 @@ window.__ModuleLoader__.load({
 			"settings.color.amber": "Amber",
 			"settings.color.alertRed": "Alert red",
 			"settings.colorDefault": "Default",
-			"settings.colorHint": "High-risk requests always use Alert red; this cannot be changed."
+			"settings.colorHint": "High-risk requests always use Alert red; this cannot be changed.",
+			"settings.outside": "Outside-app approval alerts",
+			"settings.outside.off": "Off",
+			"settings.outside.offDesc": "Show nothing outside the app; handle the request when you return.",
+			"settings.outside.notification": "System notification",
+			"settings.outside.notificationDesc": "Slide in at the bottom-right and click to return to DSH. It never approves and closes automatically.",
+			"settings.outside.window": "Top-level window",
+			"settings.outside.windowDesc": "Open the native window where the request can be approved.",
+			"settings.disableHighRiskTitle": "Turn off high-risk detection?",
+			"settings.disableHighRiskBody": "All permission requests will be treated as normal requests: no red styling, no keyboard approval lockout, and no risk categories.",
+			"settings.cancel": "Cancel",
+			"settings.confirmDisable": "Turn off"
 		};
 
 		const styles = {
@@ -609,7 +631,8 @@ window.__ModuleLoader__.load({
 							method: "POST",
 							headers: { "content-type": "application/json" },
 							body: JSON.stringify({
-								visible: focused && document.visibilityState !== "hidden"
+								visible: focused && document.visibilityState !== "hidden",
+								origin: typeof location !== "undefined" ? location.origin : ""
 							})
 						});
 						const body = await response.json();
@@ -648,6 +671,19 @@ window.__ModuleLoader__.load({
 			{ id: "amber", hex: "#D97706", labelKey: "settings.color.amber" }
 		];
 		const HIGH_RISK_COLOR = { hex: "#DC2626", labelKey: "settings.color.alertRed" };
+		const OUTSIDE_OPTIONS = [
+			{ id: "off", labelKey: "settings.outside.off", descKey: "settings.outside.offDesc" },
+			{
+				id: "notification",
+				labelKey: "settings.outside.notification",
+				descKey: "settings.outside.notificationDesc"
+			},
+			{
+				id: "window",
+				labelKey: "settings.outside.window",
+				descKey: "settings.outside.windowDesc"
+			}
+		];
 
 		const settingsStyles = {
 			root: { display: "flex", flexDirection: "column", gap: 10, maxWidth: 760 },
@@ -724,6 +760,65 @@ window.__ModuleLoader__.load({
 				border: "1px solid var(--dsw-alias-border-l2)",
 				borderRadius: 999,
 				padding: "1px 6px"
+			},
+			outsideGrid: { display: "flex", flexDirection: "column", gap: 8 },
+			outsideOption: {
+				display: "flex",
+				alignItems: "flex-start",
+				gap: 10,
+				padding: "10px 12px",
+				borderRadius: 10,
+				border: "1px solid var(--dsw-alias-border-l2)",
+				background: "transparent",
+				color: "var(--dsw-alias-label-primary)",
+				textAlign: "left",
+				font: "inherit",
+				cursor: "pointer"
+			},
+			outsideOptionSelected: {
+				borderColor: "var(--dsw-alias-brand-primary)",
+				boxShadow: "0 0 0 2px var(--dsw-alias-brand-primary)"
+			},
+			outsideText: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0 },
+			outsideTitle: { fontSize: 13, fontWeight: 600 },
+			outsideDesc: {
+				fontSize: 11,
+				lineHeight: "16px",
+				color: "var(--dsw-alias-label-tertiary)"
+			},
+			warningBox: {
+				border: "1px solid rgba(245, 158, 11, 0.55)",
+				borderRadius: 12,
+				padding: "12px 14px",
+				background: "rgba(245, 158, 11, 0.08)",
+				display: "flex",
+				flexDirection: "column",
+				gap: 8
+			},
+			warningTitle: { fontSize: 13, fontWeight: 600, color: "var(--dsw-alias-label-primary)" },
+			warningText: {
+				fontSize: 12,
+				lineHeight: "18px",
+				color: "var(--dsw-alias-label-secondary)"
+			},
+			warningActions: { display: "flex", justifyContent: "flex-end", gap: 8 },
+			warningCancel: {
+				padding: "6px 12px",
+				borderRadius: 8,
+				border: "1px solid var(--dsw-alias-border-l2)",
+				background: "transparent",
+				color: "var(--dsw-alias-label-primary)",
+				font: "inherit",
+				cursor: "pointer"
+			},
+			warningConfirm: {
+				padding: "6px 12px",
+				borderRadius: 8,
+				border: "1px solid #dc2626",
+				background: "#dc2626",
+				color: "#ffffff",
+				font: "inherit",
+				cursor: "pointer"
 			}
 		};
 
@@ -758,6 +853,7 @@ window.__ModuleLoader__.load({
 		function SettingsPage({ t }) {
 			const [settings, setSettings] = useState(null);
 			const [status, setStatus] = useState("");
+			const [confirmDisable, setConfirmDisable] = useState(false);
 
 			useEffect(() => {
 				let stopped = false;
@@ -809,6 +905,39 @@ window.__ModuleLoader__.load({
 				{ style: settingsStyles.root },
 				h("h3", { style: settingsStyles.title }, t("settings.title")),
 				h("p", { style: settingsStyles.desc }, t("settings.desc")),
+				confirmDisable
+					? h(
+							"div",
+							{ style: settingsStyles.warningBox, role: "alertdialog", "aria-modal": "false" },
+							h("div", { style: settingsStyles.warningTitle }, t("settings.disableHighRiskTitle")),
+							h("div", { style: settingsStyles.warningText }, t("settings.disableHighRiskBody")),
+							h(
+								"div",
+								{ style: settingsStyles.warningActions },
+								h(
+									"button",
+									{
+										type: "button",
+										style: settingsStyles.warningCancel,
+										onClick: () => setConfirmDisable(false)
+									},
+									t("settings.cancel")
+								),
+								h(
+									"button",
+									{
+										type: "button",
+										style: settingsStyles.warningConfirm,
+										onClick: () => {
+											setConfirmDisable(false);
+											update("enabled", false);
+										}
+									},
+									t("settings.confirmDisable")
+								)
+							)
+						)
+					: null,
 				h(
 					"div",
 					{ style: settingsStyles.card },
@@ -818,7 +947,13 @@ window.__ModuleLoader__.load({
 						label: t("settings.enabled"),
 						hint: t("settings.enabledDesc"),
 						checked: settings.enabled,
-						onChange: (value) => update("enabled", value)
+						onChange: (value) => {
+							if (!value) {
+								setConfirmDisable(true);
+								return;
+							}
+							update("enabled", value);
+						}
 					}),
 					h(
 						"div",
@@ -885,6 +1020,34 @@ window.__ModuleLoader__.load({
 					)
 				),
 				h("p", { style: settingsStyles.hint }, t("settings.colorHint")),
+				h("h4", { style: settingsStyles.sectionTitle }, t("settings.outside")),
+				h(
+					"div",
+					{ style: settingsStyles.outsideGrid, role: "radiogroup" },
+					OUTSIDE_OPTIONS.map((option) => {
+						const selected = (settings.outside ?? "notification") === option.id;
+						return h(
+							"button",
+							{
+								key: option.id,
+								type: "button",
+								role: "radio",
+								"aria-checked": selected,
+								style: {
+									...settingsStyles.outsideOption,
+									...(selected ? settingsStyles.outsideOptionSelected : null)
+								},
+								onClick: () => update("outside", option.id)
+							},
+							h(
+								"span",
+								{ style: settingsStyles.outsideText },
+								h("span", { style: settingsStyles.outsideTitle }, t(option.labelKey)),
+								h("span", { style: settingsStyles.outsideDesc }, t(option.descKey))
+							)
+						);
+					})
+				),
 				h(
 					"div",
 					{ style: settingsStyles.status },

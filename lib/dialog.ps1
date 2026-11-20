@@ -265,7 +265,7 @@ public class DshRoundButton : Button {
     $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96)
     $form.ClientSize = New-Object System.Drawing.Size(620, 470)
     $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
-    $workArea = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+    $workArea = [System.Windows.Forms.Screen]::FromPoint([System.Windows.Forms.Cursor]::Position).WorkingArea
     $left = $workArea.Left + [int](($workArea.Width - $form.Width) / 2)
     $top = $workArea.Top + [int](($workArea.Height - $form.Height) / 2)
     if ($left -lt $workArea.Left) { $left = $workArea.Left }
@@ -274,6 +274,10 @@ public class DshRoundButton : Button {
     $form.ShowInTaskbar = $true
     $form.TopMost = $true
     $form.Font = $subtitleFont
+    $iconPath = Join-Path $PSScriptRoot 'icon.ico'
+    if (Test-Path $iconPath) {
+        try { $form.Icon = New-Object System.Drawing.Icon($iconPath) } catch { }
+    }
     $form.AccentColor = $accent
     $form.SurfaceColor = $surface
     $form.BorderColor = $border

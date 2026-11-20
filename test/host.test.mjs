@@ -54,5 +54,6 @@ assert.equal(settings.value.ok, true);
 assert.equal(settings.value.settings.enabled, true);
 assert.equal(settings.value.settings.delete, true);
 assert.equal(settings.value.settings.accent, 'deepBlue');
+assert.equal(settings.value.settings.outside, 'notification');
 
 console.log('host approval owner test passed');
