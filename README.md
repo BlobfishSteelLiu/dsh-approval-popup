@@ -17,6 +17,10 @@ DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，
 | --- | --- |
 | ![系统级常规](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/03-normal-native.webp) | ![系统级高危](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/04-high-risk-native.webp) |
 
+| 系统通知常规 | 系统通知高危 |
+| --- | --- |
+| ![系统通知常规](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/05-notification.webp) | ![系统通知高危](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/06-notification-high-risk.webp) |
+
 ## 高危请求
 
 删除文件、修改系统文件、注册表等高风险操作会进入**高危模式**：
