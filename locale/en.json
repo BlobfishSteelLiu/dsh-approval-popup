@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Approval popup",
-    "description": "Shows sandbox permission escalations as a global in-app modal and a native Windows dialog, with semantic high-risk detection and per-category switches. Also shows an outside-app question bubble when an Agent needs an answer. Windows only; settings are under Settings → Permission approvals. Feedback: https://github.com/BlobfishSteelLiu/dsh-approval-popup/issues — due to school, the developer reviews and replies only during winter/summer/spring/autumn breaks and non-working days; release cadence is not guaranteed.",
+    "description": "Shows sandbox permission escalations as a global in-app modal and a native Windows dialog, with semantic high-risk detection and per-category switches. Also shows an outside-app question bubble when an Agent needs an answer. Windows only; settings are under Settings → Permission approvals. Feedback: https://github.com/BlobfishSteelLiu/dsh-approval-popup/issues — due to school, the developer reviews and replies to feedback only during winter/summer/spring/autumn breaks, weekends, and public holidays. Response times on ordinary days and release cadence are not guaranteed. Security-related reports (for example, a high-risk operation classified as normal, or an approval bypass) are prioritized; please prefix the title with [Security].",
     "detail": "docs/DETAIL.md"
   }
 }

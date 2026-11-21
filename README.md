@@ -4,9 +4,9 @@
 >
 > 仓库反馈入口：[GitHub Issues](https://github.com/BlobfishSteelLiu/dsh-approval-popup/issues)
 >
-> 因学业繁忙，开发者仅在寒暑假、春秋假、非工作日查看并回复反馈，无法保证新版本发布节奏。
+> 因学业繁忙，开发者仅在寒暑假、春秋假、周末与法定节假日查看并回复反馈，平时不保证响应时间，也不保证版本发布节奏。涉及安全问题的反馈（例如高危操作被误判为常规、审批可被绕过）会优先处理，请在标题标注 [安全]。
 >
-> Feedback: [GitHub Issues](https://github.com/BlobfishSteelLiu/dsh-approval-popup/issues). Due to school, the developer reviews and replies only during winter/summer/spring/autumn breaks and non-working days; release cadence is not guaranteed.
+> Feedback: [GitHub Issues](https://github.com/BlobfishSteelLiu/dsh-approval-popup/issues). Due to school, the developer reviews and replies to feedback only during winter/summer/spring/autumn breaks, weekends, and public holidays. Response times on ordinary days and release cadence are not guaranteed. Security-related reports (for example, a high-risk operation classified as normal, or an approval bypass) are prioritized; please prefix the title with [Security].
 
 DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，**仅支持 Windows**：
 
