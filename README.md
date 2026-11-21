@@ -7,6 +7,16 @@ DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，
 
 两边回答的是**同一个**待审批请求：先答者生效，另一边在下次轮询时自动关闭，不会重复审批。
 
+## 截图
+
+| 应用内常规 | 应用内高危 |
+| --- | --- |
+| ![应用内常规](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/01-normal-in-app.webp) | ![应用内高危](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/02-high-risk-in-app.webp) |
+
+| 系统级常规 | 系统级高危 |
+| --- | --- |
+| ![系统级常规](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/03-normal-native.webp) | ![系统级高危](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/04-high-risk-native.webp) |
+
 ## 高危请求
 
 删除文件、修改系统文件、注册表等高风险操作会进入**高危模式**：
@@ -29,7 +39,15 @@ DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，
 - 检查 `[System.IO.File]::Delete(...)`、`[Microsoft.Win32.Registry]...SetValue(...)` 等 .NET 方法调用；
 - `Invoke-Expression` / `iex` 动态执行直接判高危。
 
-其他 shell（bash）和结构化工具仍使用命令/参数关键词匹配；AST 分析失败时才退回关键词匹配。语义分析仍不能覆盖运行时拼接、编码混淆或脚本内部再删除的情况。
+对 Bash（`bash` / `sh` / `zsh` / `dash` / `ksh` / `fish`）使用轻量命令 AST：解析引号、管道、命令分隔符、重定向、`$(...)`/反引号命令替换，以及 `bash -c`、`cmd /c`、`eval`、`xargs` 等嵌套命令。除普通 `rm` 外，专门识别：
+
+- `robocopy src dst /MIR`（镜像同步会删除目标端多余文件）
+- `git clean -fdx`（强制清空未跟踪和忽略文件）
+- `rd /s /q`、`rmdir /s /q`、`del /f /s /q`、`erase`（cmd 缩写）
+- `diskpart`、`format`、`cipher /w`（擦盘或格式化）
+- `find ... -delete`
+
+其他结构化工具仍使用命令/参数关键词匹配；AST 分析失败时才退回关键词匹配。语义分析仍不能覆盖运行时拼接、编码混淆或脚本内部再删除的情况。
 
 ## 设置
 
