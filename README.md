@@ -51,7 +51,15 @@ DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，
 - `diskpart`、`format`、`cipher /w`（擦盘或格式化）
 - `find ... -delete`
 
-其他结构化工具仍使用命令/参数关键词匹配；AST 分析失败时才退回关键词匹配。语义分析仍不能覆盖运行时拼接、编码混淆或脚本内部再删除的情况。
+分析失败、超时或异常时直接判为高危（fail-safe），不会降级成“未发现风险”。其他结构化工具仍使用命令/参数关键词匹配。语义分析仍不能覆盖运行时拼接、编码混淆或脚本内部再删除的情况。
+
+每次判定会追加一行精简日志到 `$DSH_HOME/dsh-approval-popup/approvals.log`：
+
+```json
+{"ts":"...","sessionId":"...","callId":"...","tool":"bash","level":"high-risk"}
+```
+
+只记录会话、工具调用和常规/高危结果，不记录命令内容或申请说明。
 
 ## 设置
 

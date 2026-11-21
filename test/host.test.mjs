@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
+import { readFileSync, rmSync } from 'node:fs';
 
 process.env.SystemRoot = 'Z:\\dsh-approval-popup-missing';
 process.env.DSH_HOME = 'E:\\DSH\\_approval_test_home';
@@ -55,5 +56,46 @@ assert.equal(settings.value.settings.enabled, true);
 assert.equal(settings.value.settings.delete, true);
 assert.equal(settings.value.settings.accent, 'deepBlue');
 assert.equal(settings.value.settings.outside, 'notification');
+
+const testHome = 'E:\\DSH\\_approval_test_home';
+const logPath = `${testHome}\\dsh-approval-popup\\approvals.log`;
+rmSync(testHome, { recursive: true, force: true });
+
+function approvalRequest(callId, toolName, command) {
+  const session = {
+    id: 'session-log-test',
+    title: 'Log test',
+    workspace: 'E:\\DSH',
+    seq: 1,
+    eventAt(seq) {
+      if (seq !== 0) return undefined;
+      return { type: 'tool/call', data: { callId, name: toolName, arguments: { command } } };
+    }
+  };
+  return { callId, toolName, agent: { session }, reason: command };
+}
+
+const listener = native.listeners[0].listener;
+
+const bashController = new AbortController();
+const bashPending = listener({ ...approvalRequest('call-log-bash', 'bash', 'robocopy src dst /MIR'), signal: bashController.signal });
+bashController.abort();
+await bashPending;
+
+const pwshController = new AbortController();
+const pwshPending = listener({ ...approvalRequest('call-log-pwsh', 'pwsh', 'Write-Output test'), signal: pwshController.signal });
+pwshController.abort();
+await pwshPending;
+
+const lines = readFileSync(logPath, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+assert.equal(lines.length, 2);
+assert.deepEqual(
+  lines.map((line) => [line.sessionId, line.callId, line.tool, line.level]),
+  [
+    ['session-log-test', 'call-log-bash', 'bash', 'high-risk'],
+    ['session-log-test', 'call-log-pwsh', 'pwsh', 'high-risk']
+  ]
+);
+rmSync(testHome, { recursive: true, force: true });
 
 console.log('host approval owner test passed');
