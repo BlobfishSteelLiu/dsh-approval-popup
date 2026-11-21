@@ -70,6 +70,8 @@ window.__ModuleLoader__.load({
 			"settings.outside.notificationDesc": "右下角滑入通知，点击切回 DSH；不直接审批，会自动消失。",
 			"settings.outside.window": "顶级窗口",
 			"settings.outside.windowDesc": "弹出可审批的原生窗口。",
+			"settings.questionNotify": "应用外提问提醒",
+			"settings.questionNotifyDesc": "应用不可见时，用消息气泡提醒 Agent 提问；点击气泡回到 DSH 回答。",
 			"settings.disableHighRiskTitle": "关闭高危识别？",
 			"settings.disableHighRiskBody": "关闭后，所有权限请求都会按常规处理：不再标红、不再禁用键盘批准，也不区分高危类别。",
 			"settings.cancel": "取消",
@@ -130,6 +132,8 @@ window.__ModuleLoader__.load({
 			"settings.outside.notificationDesc": "Slide in at the bottom-right and click to return to DSH. It never approves and closes automatically.",
 			"settings.outside.window": "Top-level window",
 			"settings.outside.windowDesc": "Open the native window where the request can be approved.",
+			"settings.questionNotify": "Outside question alerts",
+			"settings.questionNotifyDesc": "When the app is hidden, show a message bubble for an Agent question; click it to return to DSH and answer.",
 			"settings.disableHighRiskTitle": "Turn off high-risk detection?",
 			"settings.disableHighRiskBody": "All permission requests will be treated as normal requests: no red styling, no keyboard approval lockout, and no risk categories.",
 			"settings.cancel": "Cancel",
@@ -1052,6 +1056,17 @@ window.__ModuleLoader__.load({
 								h("span", { style: settingsStyles.outsideDesc }, t(option.descKey))
 							)
 						);
+					})
+				),
+				h(
+					"div",
+					{ style: settingsStyles.card },
+					h(ToggleRow, {
+						first: true,
+						label: t("settings.questionNotify"),
+						hint: t("settings.questionNotifyDesc"),
+						checked: settings.questionNotify !== false,
+						onChange: (value) => update("questionNotify", value)
 					})
 				),
 				h(

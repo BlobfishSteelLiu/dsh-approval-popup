@@ -4,6 +4,7 @@ DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，
 
 - **应用内弹窗**：全局层，任何对话的审批都会显示在 DSH 页面中央，带**会话标题**、工作区、发起工具、申请说明。
 - **应用外提醒**：应用不可见时按设置选择「关闭 / 系统通知 / 顶级窗口」。默认「系统通知」在屏幕右下角滑入、不抢操作、自动消失，点击只会切回 DSH，不直接审批；右上角 × 可提前关闭。「顶级窗口」才会弹出可审批的原生 WinForms 窗口。应用在前台时只显示应用内弹窗。
+- **应用外提问提醒**：Agent 调用 `ask_user_question` 时，应用不可见会弹出问号气泡；点击切回 DSH 回答，不会代替你回答，可在设置中关闭。
 
 两边回答的是**同一个**待审批请求：先答者生效，另一边在下次轮询时自动关闭，不会重复审批。
 
@@ -20,6 +21,10 @@ DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，
 | 系统通知常规 | 系统通知高危 |
 | --- | --- |
 | ![系统通知常规](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/05-notification.webp) | ![系统通知高危](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/06-notification-high-risk.webp) |
+
+**提问提醒**
+
+![需要你的回答](https://raw.githubusercontent.com/BlobfishSteelLiu/dsh-approval-popup/main/assets/screenshots/07-question-notification.webp)
 
 ## 高危请求
 
@@ -70,6 +75,7 @@ DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，
   - 关闭：不显示任何应用外提示；
   - 系统通知：右下角滑入、置顶但不抢焦点，点击切回 DSH，自动消失，右上角 × 可提前关闭；
   - 顶级窗口：弹出可直接审批的原生窗口。
+- **应用外提问提醒**：默认开启；Agent 提问时只用问号气泡提醒，不会弹出顶级窗口，也不会代替回答。关闭方式与审批提醒一致，直接取消勾选。
 - 六类可按需开关：
   - 删除文件；
   - 注册表修改；

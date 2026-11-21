@@ -26,9 +26,14 @@ assert.ok(native.route, 'bridge route registered');
 assert.equal(native.route.path, '/dsh-approval-popup');
 assert.equal(native.route.kind, 'prefix');
 assert.equal(native.route.handler.length >= 2, true);
-assert.equal(native.listeners.length, 1);
-assert.equal(native.listeners[0].event, 'approval/request');
-assert.equal(native.listeners[0].options?.prepend, true);
+assert.deepEqual(
+  native.listeners.map((listener) => listener.event),
+  ['approval/request', 'tools/pre-execute', 'user-questions/request', 'session/event']
+);
+assert.equal(
+  native.listeners.slice(0, 3).every((listener) => listener.options?.prepend === true),
+  true
+);
 
 function call(route, url, body) {
   return new Promise((resolve) => {
@@ -56,6 +61,7 @@ assert.equal(settings.value.settings.enabled, true);
 assert.equal(settings.value.settings.delete, true);
 assert.equal(settings.value.settings.accent, 'deepBlue');
 assert.equal(settings.value.settings.outside, 'notification');
+assert.equal(settings.value.settings.questionNotify, true);
 
 const testHome = 'E:\\DSH\\_approval_test_home';
 const logPath = `${testHome}\\dsh-approval-popup\\approvals.log`;

@@ -95,10 +95,12 @@ public class DshToastForm : Form {
     public string HighRiskLabel = "";
     public string Hint = "";
     public bool HighRisk = false;
+    public bool Question = false;
     public Font TitleFont;
     public Font BodyFont;
     public Font SmallFont;
     public Font PillFont;
+    public Font BadgeFont;
 
     public DshToastForm() {
         FormBorderStyle = FormBorderStyle.None;
@@ -160,13 +162,25 @@ public class DshToastForm : Form {
         int toolY = bodyY + bodyH + S(2);
         int hintY = toolY + smallH + S(2);
         int badgeX = padX;
-        int badgeY = titleY + S(8);
-        int badgeSize = S(52);
+        int badgeY = titleY + (Question ? S(5) : S(8));
+        int badgeSize = S(Question ? 60 : 52);
         using (var badge = new SolidBrush(AccentColor)) e.Graphics.FillEllipse(badge, badgeX, badgeY, badgeSize, badgeSize);
-        using (var glyphPen = new Pen(AccentTextColor, 3.8f * LayoutScale)) {
-            float x = badgeX + S(26);
-            e.Graphics.DrawLine(glyphPen, x, badgeY + S(14), x, badgeY + S(29));
-            using (var dot = new SolidBrush(AccentTextColor)) e.Graphics.FillEllipse(dot, x - S(4), badgeY + S(35), S(7), S(7));
+        if (Question) {
+            TextRenderer.DrawText(
+                e.Graphics,
+                "?",
+                BadgeFont,
+                new Rectangle(badgeX + S(2), badgeY + S(1), badgeSize, badgeSize),
+                AccentTextColor,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix
+            );
+        }
+        else {
+            using (var glyphPen = new Pen(AccentTextColor, 3.8f * LayoutScale)) {
+                float x = badgeX + S(26);
+                e.Graphics.DrawLine(glyphPen, x, badgeY + S(14), x, badgeY + S(29));
+                using (var dot = new SolidBrush(AccentTextColor)) e.Graphics.FillEllipse(dot, x - S(4), badgeY + S(35), S(7), S(7));
+            }
         }
 
         int titleWidth = contentRight - textX;
@@ -223,10 +237,12 @@ public class DshToastForm : Form {
     $form.HighRiskLabel = [string]$payload.highRiskLabel
     $form.Hint = [string]$payload.hint
     $form.HighRisk = $highRisk
+    $form.Question = ([string]$payload.kind -eq 'question')
     $form.TitleFont = New-Object System.Drawing.Font($fontName, 12, [System.Drawing.FontStyle]::Bold)
     $form.BodyFont = New-Object System.Drawing.Font($fontName, 10.5, [System.Drawing.FontStyle]::Regular)
     $form.SmallFont = New-Object System.Drawing.Font($fontName, 9.5, [System.Drawing.FontStyle]::Regular)
     $form.PillFont = New-Object System.Drawing.Font($fontName, 9, [System.Drawing.FontStyle]::Bold)
+    $form.BadgeFont = New-Object System.Drawing.Font($fontName, 17, [System.Drawing.FontStyle]::Bold)
 
     $targetScreen = $null
     try {
@@ -252,7 +268,7 @@ public class DshToastForm : Form {
     }
     $workArea = $targetScreen.WorkingArea
     $finalLeft = $workArea.Right - $form.Width - 16
-    $finalTop = $workArea.Bottom - $form.Height - 16
+    $finalTop = $workArea.Bottom - $form.Height - [int][Math]::Round(40 * $layoutScale)
     $form.Location = New-Object System.Drawing.Point(($workArea.Right + 4), $finalTop)
 
     function Test-Maximized([IntPtr]$handle) {
