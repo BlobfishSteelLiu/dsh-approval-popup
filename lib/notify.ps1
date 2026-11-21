@@ -82,6 +82,7 @@ public static class DshToastUi {
 }
 
 public class DshToastForm : Form {
+    public float LayoutScale = 1f;
     public Color AccentColor = Color.FromArgb(37, 99, 235);
     public Color AccentTextColor = Color.White;
     public Color SurfaceColor = Color.White;
@@ -122,9 +123,13 @@ public class DshToastForm : Form {
         }
     }
 
+    private int S(int value) {
+        return (int)Math.Round(value * LayoutScale);
+    }
+
     protected override void OnResize(EventArgs e) {
         base.OnResize(e);
-        using (var path = DshToastUi.RoundRect(new Rectangle(0, 0, Width, Height), 24)) {
+        using (var path = DshToastUi.RoundRect(new Rectangle(0, 0, Width, Height), S(18))) {
             var old = Region;
             Region = new Region(path);
             if (old != null) old.Dispose();
@@ -134,51 +139,52 @@ public class DshToastForm : Form {
     protected override void OnPaint(PaintEventArgs e) {
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
         var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-        using (var path = DshToastUi.RoundRect(rect, 18)) {
+        using (var path = DshToastUi.RoundRect(rect, S(18))) {
             using (var brush = new SolidBrush(SurfaceColor)) e.Graphics.FillPath(brush, path);
             using (var pen = new Pen(BorderColor, 1)) e.Graphics.DrawPath(pen, path);
         }
-        using (var accentPath = DshToastUi.RoundRect(rect, 18)) {
+        using (var accentPath = DshToastUi.RoundRect(rect, S(18))) {
             e.Graphics.SetClip(accentPath);
-            using (var accentBrush = new SolidBrush(AccentColor)) e.Graphics.FillRectangle(accentBrush, 0, 0, 8, Height);
+            using (var accentBrush = new SolidBrush(AccentColor)) e.Graphics.FillRectangle(accentBrush, 0, 0, S(8), Height);
             e.Graphics.ResetClip();
         }
 
-        int padX = 52;
-        int textX = 120;
-        int contentRight = Width - 56;
-        int titleY = 40;
-        int titleH = TitleFont.Height + 10;
-        int bodyH = BodyFont.Height + 8;
-        int smallH = SmallFont.Height + 6;
-        int bodyY = titleY + titleH + 2;
-        int toolY = bodyY + bodyH + 2;
-        int hintY = toolY + smallH + 2;
+        int padX = S(52);
+        int textX = S(120);
+        int contentRight = Width - S(56);
+        int titleY = S(40);
+        int titleH = TitleFont.Height + S(10);
+        int bodyH = BodyFont.Height + S(8);
+        int smallH = SmallFont.Height + S(6);
+        int bodyY = titleY + titleH + S(2);
+        int toolY = bodyY + bodyH + S(2);
+        int hintY = toolY + smallH + S(2);
         int badgeX = padX;
-        int badgeY = titleY + 8;
-        using (var badge = new SolidBrush(AccentColor)) e.Graphics.FillEllipse(badge, badgeX, badgeY, 52, 52);
-        using (var glyphPen = new Pen(AccentTextColor, 3.8f)) {
-            float x = badgeX + 26f;
-            e.Graphics.DrawLine(glyphPen, x, badgeY + 14f, x, badgeY + 29f);
-            using (var dot = new SolidBrush(AccentTextColor)) e.Graphics.FillEllipse(dot, x - 3.5f, badgeY + 35f, 7, 7);
+        int badgeY = titleY + S(8);
+        int badgeSize = S(52);
+        using (var badge = new SolidBrush(AccentColor)) e.Graphics.FillEllipse(badge, badgeX, badgeY, badgeSize, badgeSize);
+        using (var glyphPen = new Pen(AccentTextColor, 3.8f * LayoutScale)) {
+            float x = badgeX + S(26);
+            e.Graphics.DrawLine(glyphPen, x, badgeY + S(14), x, badgeY + S(29));
+            using (var dot = new SolidBrush(AccentTextColor)) e.Graphics.FillEllipse(dot, x - S(4), badgeY + S(35), S(7), S(7));
         }
 
         int titleWidth = contentRight - textX;
-        using (var closePen = new Pen(MutedColor, 1.8f)) {
-            e.Graphics.DrawLine(closePen, Width - 52, 42, Width - 38, 56);
-            e.Graphics.DrawLine(closePen, Width - 38, 42, Width - 52, 56);
+        using (var closePen = new Pen(MutedColor, 1.8f * LayoutScale)) {
+            e.Graphics.DrawLine(closePen, Width - S(52), S(42), Width - S(38), S(56));
+            e.Graphics.DrawLine(closePen, Width - S(38), S(42), Width - S(52), S(56));
         }
 
         if (HighRisk && HighRiskLabel != "") {
-            int pillHeight = PillFont.Height + 10;
-            int pillWidth = TextRenderer.MeasureText(HighRiskLabel, PillFont).Width + 28;
-            int pillX = Width - pillWidth - 72;
+            int pillHeight = PillFont.Height + S(10);
+            int pillWidth = TextRenderer.MeasureText(HighRiskLabel, PillFont).Width + S(28);
+            int pillX = Width - pillWidth - S(72);
             int pillY = titleY;
             using (var pillPath = DshToastUi.RoundRect(new Rectangle(pillX, pillY, pillWidth, pillHeight), pillHeight / 2)) {
                 using (var pillBrush = new SolidBrush(AccentColor)) e.Graphics.FillPath(pillBrush, pillPath);
             }
             TextRenderer.DrawText(e.Graphics, HighRiskLabel, PillFont, new Rectangle(pillX, pillY, pillWidth, pillHeight), AccentTextColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
-            titleWidth = pillX - textX - 16;
+            titleWidth = pillX - textX - S(16);
         }
 
         TextRenderer.DrawText(e.Graphics, Header, TitleFont, new Rectangle(textX, titleY, titleWidth, titleH), TextColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
@@ -197,8 +203,14 @@ public class DshToastForm : Form {
     $border = if ($highRisk) { [System.Drawing.Color]::FromArgb(254, 202, 202) } else { [System.Drawing.Color]::FromArgb(226, 232, 240) }
 
     $fontName = if ($payload.lang -eq 'zh') { 'Microsoft YaHei UI' } else { 'Segoe UI' }
+    $dpiScale = [System.Drawing.Graphics]::FromHwnd([IntPtr]::Zero).DpiX / 96
+    $layoutScale = $dpiScale / 2.25
     $form = New-Object DshToastForm
-    $form.ClientSize = New-Object System.Drawing.Size(980, 292)
+    $form.LayoutScale = $layoutScale
+    $form.ClientSize = New-Object System.Drawing.Size(
+        [int][Math]::Round(980 * $layoutScale),
+        [int][Math]::Round(292 * $layoutScale)
+    )
     $form.AccentColor = $accent
     $form.AccentTextColor = $accentText
     $form.SurfaceColor = $surface
@@ -328,7 +340,9 @@ public class DshToastForm : Form {
     $form.Add_MouseDown({
         param($sender, $eventArgs)
         $timer.Stop()
-        if ($eventArgs.X -ge ($form.Width - 68) -and $eventArgs.Y -le 80) {
+        $closeWidth = [int][Math]::Round(68 * $form.LayoutScale)
+        $closeHeight = [int][Math]::Round(80 * $form.LayoutScale)
+        if ($eventArgs.X -ge ($form.Width - $closeWidth) -and $eventArgs.Y -le $closeHeight) {
             $form.Close()
             return
         }

@@ -149,14 +149,14 @@ window.__ModuleLoader__.load({
 				backdropFilter: "blur(3px)"
 			},
 			card: {
-				width: "min(92vw, 560px)",
-				maxHeight: "82vh",
+				width: "min(94vw, 640px)",
+				maxHeight: "min(86vh, 760px)",
 				overflowY: "auto",
 				boxSizing: "border-box",
 				display: "flex",
 				flexDirection: "column",
-				gap: 14,
-				padding: "20px 20px 16px",
+				gap: "clamp(12px, 1.6vh, 18px)",
+				padding: "clamp(18px, 2.4vw, 26px)",
 				borderRadius: 16,
 				border: "1px solid var(--dsw-alias-border-l2, rgba(148, 163, 184, 0.35))",
 				background: "var(--dsw-specific-input-major, var(--dsw-alias-bg-layer-1, #ffffff))",
@@ -171,7 +171,13 @@ window.__ModuleLoader__.load({
 			title: { margin: 0, fontSize: 18, fontWeight: 600, lineHeight: "26px" },
 			lead: { margin: 0, fontSize: 13, lineHeight: "20px", color: "var(--dsw-alias-label-secondary, #4b5563)" },
 			body: { display: "flex", flexDirection: "column", gap: 12 },
-			footer: { display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 2 },
+			footer: {
+				display: "flex",
+				justifyContent: "flex-end",
+				flexWrap: "wrap",
+				gap: 8,
+				marginTop: 2
+			},
 			button: {
 				height: 36,
 				padding: "0 16px",
@@ -205,7 +211,7 @@ window.__ModuleLoader__.load({
 				borderLeft: "3px solid #3b82f6",
 				borderRadius: 10,
 				padding: "10px 12px 10px 13px",
-				maxHeight: "34vh",
+				maxHeight: "min(38vh, 380px)",
 				overflowY: "auto"
 			},
 			reasonBlockHighRisk: {
