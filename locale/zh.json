@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "权限审批弹窗",
-    "description": "把沙箱权限提升请求显示为全局应用内弹窗和 Windows 原生系统弹窗，支持语义级高危识别与分类开关；Agent 提问需要你回答时，也会在应用外显示问号气泡。仅支持 Windows；设置位于“设置 → 权限审批”。",
+    "description": "把沙箱权限提升请求显示为全局应用内弹窗和 Windows 原生系统弹窗，支持语义级高危识别与分类开关；Agent 提问需要你回答时，也会在应用外显示问号气泡。仅支持 Windows；设置位于“设置 → 权限审批”。反馈：https://github.com/BlobfishSteelLiu/dsh-approval-popup/issues —— 因学业繁忙，开发者仅在寒暑假、春秋假、非工作日查看并回复反馈，无法保证新版本发布节奏。",
     "detail": "docs/DETAIL.zh.md"
   }
 }

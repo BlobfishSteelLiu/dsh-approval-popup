@@ -1,5 +1,13 @@
 # dsh-approval-popup
 
+> **反馈与维护节奏**
+>
+> 仓库反馈入口：[GitHub Issues](https://github.com/BlobfishSteelLiu/dsh-approval-popup/issues)
+>
+> 因学业繁忙，开发者仅在寒暑假、春秋假、非工作日查看并回复反馈，无法保证新版本发布节奏。
+>
+> Feedback: [GitHub Issues](https://github.com/BlobfishSteelLiu/dsh-approval-popup/issues). Due to school, the developer reviews and replies only during winter/summer/spring/autumn breaks and non-working days; release cadence is not guaranteed.
+
 DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，**仅支持 Windows**：
 
 - **应用内弹窗**：全局层，任何对话的审批都会显示在 DSH 页面中央，带**会话标题**、工作区、发起工具、申请说明。
