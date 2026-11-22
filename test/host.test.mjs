@@ -9,11 +9,12 @@ const { apply, name, inject } = await import('../lib/index.js');
 assert.equal(name, 'dsh-approval-popup');
 assert.deepEqual([...inject], ['webServer']);
 
-function install() {
+function install(connection) {
   let route;
   const listeners = [];
   const ctx = {
     webServer: { register(value) { route = value; return () => {}; } },
+    get(name) { return name === 'connection' ? connection : undefined; },
     effect(fn) { return fn(); },
     on(event, listener, options) { listeners.push({ event, listener, options }); return () => {}; }
   };
@@ -62,6 +63,14 @@ assert.equal(settings.value.settings.delete, true);
 assert.equal(settings.value.settings.accent, 'deepBlue');
 assert.equal(settings.value.settings.outside, 'notification');
 assert.equal(settings.value.settings.questionNotify, true);
+
+const denied = install({ requestRejection() { return 403; } });
+const deniedResponse = await call(denied.route, '/dsh-approval-popup/settings/get', {});
+assert.equal(deniedResponse.status, 403);
+
+const unauthenticated = install({ requestRejection() { return 401; } });
+const unauthenticatedResponse = await call(unauthenticated.route, '/dsh-approval-popup/settings/get', {});
+assert.equal(unauthenticatedResponse.status, 401);
 
 const testHome = 'E:\\DSH\\_approval_test_home';
 const logPath = `${testHome}\\dsh-approval-popup\\approvals.log`;
