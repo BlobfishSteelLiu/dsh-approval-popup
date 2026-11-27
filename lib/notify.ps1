@@ -140,6 +140,8 @@ public class DshToastForm : Form {
 
     protected override void OnPaint(PaintEventArgs e) {
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+        e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
         var rect = new Rectangle(0, 0, Width - 1, Height - 1);
         using (var path = DshToastUi.RoundRect(rect, S(18))) {
             using (var brush = new SolidBrush(SurfaceColor)) e.Graphics.FillPath(brush, path);

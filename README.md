@@ -13,6 +13,8 @@ DeepSeek Harness 权限提升（sandbox escalation）审批的双界面插件，
 - **应用内弹窗**：全局层，任何对话的审批都会显示在 DSH 页面中央，带**会话标题**、工作区、发起工具、申请说明。
 - **应用外提醒**：应用不可见时按设置选择「关闭 / 系统通知 / 顶级窗口」。默认「系统通知」在屏幕右下角滑入、不抢操作、自动消失，点击只会切回 DSH，不直接审批；右上角 × 可提前关闭。「顶级窗口」才会弹出可审批的原生 WinForms 窗口。应用在前台时只显示应用内弹窗。
 - **应用外提问提醒**：Agent 调用 `ask_user_question` 时，应用不可见会弹出问号气泡；点击切回 DSH 回答，不会代替你回答，可在设置中关闭。
+- **Agent 状态悬浮窗**：置顶、不抢焦点、不进入任务栏和托盘；白底黑字、左侧主题色条，显示会话名、模型、Agent 状态、余额/峰谷、轮数和 token。多会话可展开，空闲会话自动隐藏；支持拖动和四角等比缩放。
+- **深浅色模式**：审批弹窗支持浅色、深色和跟随 DSH；设置页的深浅色、高危开关、主题色、批准提醒、提问提醒、悬浮窗均集中在一页。
 
 两边回答的是**同一个**待审批请求：先答者生效，另一边在下次轮询时自动关闭，不会重复审批。
 
@@ -124,7 +126,7 @@ approval/request
 - 应用内弹窗没有关闭 X；遮罩、Esc 都不回答请求；只有「允许一次 / 拒绝」按钮生效；初始焦点在「拒绝」。
 - 桥接路由仅接受 loopback 请求（`127.0.0.1` / `::1`），仅接受 POST JSON。
 - 宿主会为每次 PowerShell 审批启动一次 `powershell.exe` 做 AST 分析，但**不会执行被审批的命令**；分析超时/失败会回退到关键词匹配。
-- 设置写入 `$DSH_HOME/dsh-approval-popup/settings.json`；不会读写凭据。
+- 设置写入 `$DSH_HOME/dsh-approval-popup/settings.json`；悬浮窗状态写入同目录 `floating.json`。余额查询只读取 `DEEPSEEK_API_KEY` 用于请求官方接口，不写入日志或状态文件。
 - 审批结果仍由 `dsh-user-approval` 写入会话审计日志。
 
 ## 安装
@@ -155,6 +157,7 @@ node --check .\client\client.js
 node .\test\host.test.mjs
 node .\test\client.test.mjs
 powershell.exe -NoProfile -Command "$null = [scriptblock]::Create((Get-Content -Raw .\lib\dialog.ps1))"
+powershell.exe -NoProfile -Command "$null = [scriptblock]::Create((Get-Content -Raw .\lib\overlay.ps1))"
 ```
 
 ## 限制
@@ -163,3 +166,5 @@ powershell.exe -NoProfile -Command "$null = [scriptblock]::Create((Get-Content -
 - 桥接依赖 DSH Web 服务与 loopback 访问；局域网/远程访问时只走应用内弹窗。
 - 对话标题/工作区取自宿主会话对象；缺失时回退到会话 ID 与进程工作目录。
 - 当前按时间顺序一次处理一个待审批项。
+- 悬浮窗仅 Windows；余额需要 `DEEPSEEK_API_KEY` 或 DSH 账号登录，二者都不可用时显示 `--`。
+- 悬浮窗的“跟随 DSH”读取 DSH 背景色亮度；DSH 运行中切换主题时，已打开的审批框不会实时重绘。

@@ -62,7 +62,9 @@ assert.equal(settings.value.settings.enabled, true);
 assert.equal(settings.value.settings.delete, true);
 assert.equal(settings.value.settings.accent, 'deepBlue');
 assert.equal(settings.value.settings.outside, 'notification');
-assert.equal(settings.value.settings.questionNotify, true);
+assert.equal(settings.value.settings.questionMode, 'bubble');
+assert.equal(settings.value.settings.theme, 'system');
+assert.equal(settings.value.settings.floatingEnabled, false);
 
 const denied = install({ requestRejection() { return 403; } });
 const deniedResponse = await call(denied.route, '/dsh-approval-popup/settings/get', {});

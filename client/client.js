@@ -72,6 +72,31 @@ window.__ModuleLoader__.load({
 			"settings.outside.windowDesc": "弹出可审批的原生窗口。",
 			"settings.questionNotify": "应用外提问提醒",
 			"settings.questionNotifyDesc": "应用不可见时，用消息气泡提醒 Agent 提问；点击气泡回到 DSH 回答。",
+			"settings.section.theme": "深浅色模式",
+			"settings.section.highRisk": "高危相关设置",
+			"settings.section.color": "主题色",
+			"settings.section.approval": "批准提醒样式",
+			"settings.section.question": "提问提醒方式",
+			"settings.section.floating": "Agent 状态悬浮窗",
+			"settings.theme.light": "浅色",
+			"settings.theme.dark": "深色",
+			"settings.theme.system": "跟随 DSH",
+			"settings.theme.lightDesc": "审批弹窗使用白色浅色界面",
+			"settings.theme.darkDesc": "审批弹窗使用当前深色界面",
+			"settings.theme.systemDesc": "跟随 DSH 当前外观",
+			"settings.question.off": "关闭",
+			"settings.question.offDesc": "应用不可见时不提醒 Agent 提问",
+			"settings.question.bubble": "消息气泡",
+			"settings.question.bubbleDesc": "用问号气泡提醒，点击回到 DSH 回答",
+			"settings.floating.enabled": "启用悬浮窗",
+			"settings.floating.enabledDesc": "置顶显示 Agent 状态，不抢操作，不进入任务栏和托盘",
+			"settings.floating.width": "悬浮窗宽度",
+			"settings.floating.widthDesc": "高度按比例自动计算；多会话展开时成倍增高",
+			"settings.floating.condition": "显示条件",
+			"settings.floating.hidden": "仅应用不在顶端时",
+			"settings.floating.hiddenDesc": "DSH 在前台时隐藏悬浮窗",
+			"settings.floating.always": "一律显示",
+			"settings.floating.alwaysDesc": "无论 DSH 是否在前台都显示",
 			"settings.disableHighRiskTitle": "关闭高危识别？",
 			"settings.disableHighRiskBody": "关闭后，所有权限请求都会按常规处理：不再标红、不再禁用键盘批准，也不区分高危类别。",
 			"settings.cancel": "取消",
@@ -134,6 +159,31 @@ window.__ModuleLoader__.load({
 			"settings.outside.windowDesc": "Open the native window where the request can be approved.",
 			"settings.questionNotify": "Outside question alerts",
 			"settings.questionNotifyDesc": "When the app is hidden, show a message bubble for an Agent question; click it to return to DSH and answer.",
+			"settings.section.theme": "Light / dark mode",
+			"settings.section.highRisk": "High-risk settings",
+			"settings.section.color": "Accent color",
+			"settings.section.approval": "Approval alert style",
+			"settings.section.question": "Question alert style",
+			"settings.section.floating": "Agent status overlay",
+			"settings.theme.light": "Light",
+			"settings.theme.dark": "Dark",
+			"settings.theme.system": "Follow DSH",
+			"settings.theme.lightDesc": "Use a white approval dialog",
+			"settings.theme.darkDesc": "Use the current dark approval dialog",
+			"settings.theme.systemDesc": "Follow DSH's current appearance",
+			"settings.question.off": "Off",
+			"settings.question.offDesc": "Do not alert when an Agent asks while the app is hidden",
+			"settings.question.bubble": "Message bubble",
+			"settings.question.bubbleDesc": "Show a question bubble; click to return and answer",
+			"settings.floating.enabled": "Enable overlay",
+			"settings.floating.enabledDesc": "Always-on-top Agent status that never steals focus and stays out of the taskbar and tray",
+			"settings.floating.width": "Overlay width",
+			"settings.floating.widthDesc": "Height follows the width; expanding multiple sessions multiplies the height",
+			"settings.floating.condition": "Show when",
+			"settings.floating.hidden": "Only when DSH is not foreground",
+			"settings.floating.hiddenDesc": "Hide the overlay while DSH is in front",
+			"settings.floating.always": "Always",
+			"settings.floating.alwaysDesc": "Keep the overlay visible even when DSH is in front",
 			"settings.disableHighRiskTitle": "Turn off high-risk detection?",
 			"settings.disableHighRiskBody": "All permission requests will be treated as normal requests: no red styling, no keyboard approval lockout, and no risk categories.",
 			"settings.cancel": "Cancel",
@@ -364,6 +414,28 @@ window.__ModuleLoader__.load({
 				pending.accent !== undefined && typeof pending.accent.hex === "string"
 					? { hex: pending.accent.hex, text: pending.accent.text || "#FFFFFF" }
 					: { hex: "#1D4ED8", text: "#FFFFFF" };
+			const themeMode = pending.theme ?? "system";
+			let dshDark = null;
+			try {
+				const root = document.documentElement;
+				const raw =
+					getComputedStyle(root).getPropertyValue("--dsw-alias-bg-layer-1").trim() ||
+					getComputedStyle(document.body).backgroundColor;
+				const match = raw.match(/\d+(?:\.\d+)?/g);
+				if (match !== null && match.length >= 3) {
+					const [r, g, b] = match.map(Number);
+					dshDark = (r * 299 + g * 587 + b * 114) / 1000 < 128;
+				}
+			} catch {
+				dshDark = null;
+			}
+			const systemDark =
+				dshDark ??
+				(typeof window !== "undefined" && typeof window.matchMedia === "function"
+					? window.matchMedia("(prefers-color-scheme: dark)").matches
+					: true);
+			const dark = highRisk || themeMode === "dark" || (themeMode === "system" && systemDark);
+			const light = !dark;
 			const blockKeyboardApproval = (event) => {
 				if (
 					event.key === "Enter" ||
@@ -431,16 +503,23 @@ window.__ModuleLoader__.load({
 			}, []);
 			const metaLabelStyle = highRisk
 				? { ...styles.metaLabel, color: "rgba(255, 255, 255, 0.8)" }
-				: styles.metaLabel;
+				: light
+					? { ...styles.metaLabel, color: "#6b7280" }
+					: styles.metaLabel;
 			const metaValueStyle = highRisk
 				? { ...styles.metaValue, color: "rgba(255, 255, 255, 0.92)" }
-				: styles.metaValue;
+				: light
+					? { ...styles.metaValue, color: "#374151" }
+					: styles.metaValue;
 			const metaStrongStyle = highRisk
 				? { ...styles.metaValueStrong, color: "#ffffff" }
-				: styles.metaValueStrong;
+				: light
+					? { ...styles.metaValueStrong, color: "#111827" }
+					: styles.metaValueStrong;
 			const rejectStyle = {
 				...styles.button,
 				...(highRisk ? styles.buttonHighRiskOutline : styles.buttonOutline),
+				...(light ? { color: "#111827", borderColor: "#cbd5e1" } : null),
 				...(!highRisk && selected === "reject" ? styles.selectedButton : null),
 				...(busy ? styles.buttonDisabled : null)
 			};
@@ -492,6 +571,13 @@ window.__ModuleLoader__.load({
 						style: {
 							...styles.card,
 							...(highRisk ? styles.cardHighRisk : null),
+							...(light
+								? {
+										background: "#ffffff",
+										color: "#111827",
+										border: "1px solid #e5e7eb"
+									}
+								: null),
 							borderTop: `4px solid ${accent.hex}`
 						},
 						role: "dialog",
@@ -503,7 +589,12 @@ window.__ModuleLoader__.load({
 						{ style: styles.header },
 						h(
 							"h2",
-							{ style: { ...styles.title, ...(highRisk ? { color: "#ffffff" } : null) } },
+							{
+								style: {
+									...styles.title,
+									...(highRisk ? { color: "#ffffff" } : light ? { color: "#111827" } : null)
+								}
+							},
 							t("title")
 						),
 						h(
@@ -511,7 +602,11 @@ window.__ModuleLoader__.load({
 							{
 								style: {
 									...styles.lead,
-									...(highRisk ? { color: "rgba(255, 255, 255, 0.9)" } : null)
+									...(highRisk
+										? { color: "rgba(255, 255, 255, 0.9)" }
+										: light
+											? { color: "#4b5563" }
+											: null)
 								}
 							},
 							t("lead")
@@ -543,6 +638,12 @@ window.__ModuleLoader__.load({
 									style: {
 										...styles.reasonBlock,
 										...(highRisk ? styles.reasonBlockHighRisk : null),
+										...(light
+											? {
+													background: "#f8fafc",
+													border: "1px solid #e2e8f0"
+												}
+											: null),
 										borderLeft: `3px solid ${highRisk ? "#DC2626" : accent.hex}`,
 										flex: 1,
 										minWidth: 0
@@ -553,7 +654,7 @@ window.__ModuleLoader__.load({
 									{
 										style: {
 											...styles.reasonLabel,
-											color: highRisk ? "#000000" : "#ffffff"
+											color: highRisk ? "#000000" : light ? "#334155" : "#ffffff"
 										}
 									},
 									t("reason")
@@ -563,7 +664,7 @@ window.__ModuleLoader__.load({
 									{
 										style: {
 											...styles.reason,
-											color: highRisk ? "#000000" : "#ffffff"
+											color: highRisk ? "#000000" : light ? "#1f2937" : "#ffffff"
 										}
 									},
 									String(reason)
@@ -694,6 +795,86 @@ window.__ModuleLoader__.load({
 				descKey: "settings.outside.windowDesc"
 			}
 		];
+		const THEME_OPTIONS = [
+			{ id: "light", labelKey: "settings.theme.light", descKey: "settings.theme.lightDesc", icon: "sun" },
+			{ id: "dark", labelKey: "settings.theme.dark", descKey: "settings.theme.darkDesc", icon: "moon" },
+			{ id: "system", labelKey: "settings.theme.system", descKey: "settings.theme.systemDesc", icon: "monitor" }
+		];
+		const QUESTION_OPTIONS = [
+			{ id: "off", labelKey: "settings.question.off", descKey: "settings.question.offDesc" },
+			{ id: "bubble", labelKey: "settings.question.bubble", descKey: "settings.question.bubbleDesc" }
+		];
+		const FLOATING_CONDITIONS = [
+			{ id: "hidden", labelKey: "settings.floating.hidden", descKey: "settings.floating.hiddenDesc" },
+			{ id: "always", labelKey: "settings.floating.always", descKey: "settings.floating.alwaysDesc" }
+		];
+
+		function ThemeIcon({ kind }) {
+			const common = {
+				width: 28,
+				height: 28,
+				viewBox: "0 0 24 24",
+				fill: "none",
+				stroke: "currentColor",
+				strokeWidth: 1.7,
+				strokeLinecap: "round",
+				strokeLinejoin: "round",
+				"aria-hidden": "true"
+			};
+			if (kind === "sun") {
+				return h(
+					"svg",
+					common,
+					h("circle", { cx: 12, cy: 12, r: 4 }),
+					h("path", { d: "M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" })
+				);
+			}
+			if (kind === "moon") {
+				return h("svg", common, h("path", { d: "M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z" }));
+			}
+			return h(
+				"svg",
+				common,
+				h("rect", { x: 3, y: 4, width: 18, height: 12, rx: 2 }),
+				h("path", { d: "M8 20h8M12 16v4" })
+			);
+		}
+
+		function ToggleSwitch({ checked, onChange, disabled }) {
+			return h(
+				"button",
+				{
+					type: "button",
+					role: "switch",
+					"aria-checked": checked,
+					disabled,
+					onClick: () => onChange(!checked),
+					style: {
+						width: 42,
+						height: 24,
+						borderRadius: 999,
+						border: "none",
+						padding: 2,
+						flex: "none",
+						cursor: disabled ? "default" : "pointer",
+						background: checked ? "var(--dsw-alias-brand-primary, #14b8a6)" : "rgba(148, 163, 184, 0.45)",
+						opacity: disabled ? 0.55 : 1,
+						transition: "background 120ms ease"
+					}
+				},
+				h("span", {
+					style: {
+						display: "block",
+						width: 20,
+						height: 20,
+						borderRadius: 999,
+						background: "#ffffff",
+						transform: checked ? "translateX(18px)" : "translateX(0)",
+						transition: "transform 120ms ease"
+					}
+				})
+			);
+		}
 
 		const settingsStyles = {
 			root: { display: "flex", flexDirection: "column", gap: 10, maxWidth: 760 },
@@ -829,6 +1010,59 @@ window.__ModuleLoader__.load({
 				color: "#ffffff",
 				font: "inherit",
 				cursor: "pointer"
+			},
+			themeGrid: {
+				display: "grid",
+				gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+				gap: 10
+			},
+			gridTwo: {
+				display: "grid",
+				gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+				gap: 10
+			},
+			choiceCard: {
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				justifyContent: "center",
+				gap: 6,
+				padding: "14px 10px",
+				minHeight: 116,
+				borderRadius: 12,
+				border: "1px solid var(--dsw-alias-border-l2)",
+				background: "transparent",
+				color: "var(--dsw-alias-label-primary)",
+				textAlign: "center",
+				font: "inherit",
+				cursor: "pointer"
+			},
+			choiceCardSelected: {
+				borderColor: "var(--dsw-alias-brand-primary)",
+				boxShadow: "0 0 0 2px var(--dsw-alias-brand-primary)",
+				background: "var(--dsw-alias-bg-layer-2)"
+			},
+			choiceIcon: { color: "var(--dsw-alias-label-primary)", display: "flex" },
+			choiceTitle: { fontSize: 14, fontWeight: 600 },
+			choiceDesc: { fontSize: 11, lineHeight: "16px", color: "var(--dsw-alias-label-tertiary)" },
+			settingRow: {
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "space-between",
+				gap: 12,
+				padding: "10px 0",
+				borderTop: "1px solid var(--dsw-alias-border-l3)"
+			},
+			fieldLabel: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0 },
+			numberInput: {
+				width: 88,
+				padding: "6px 8px",
+				borderRadius: 8,
+				border: "1px solid var(--dsw-alias-border-l2)",
+				background: "var(--dsw-alias-bg-layer-1)",
+				color: "var(--dsw-alias-label-primary)",
+				font: "inherit",
+				fontSize: 13
 			}
 		};
 
@@ -948,23 +1182,54 @@ window.__ModuleLoader__.load({
 							)
 						)
 					: null,
+				h("h4", { style: settingsStyles.sectionTitle }, t("settings.section.theme")),
+				h(
+					"div",
+					{ style: settingsStyles.themeGrid },
+					THEME_OPTIONS.map((option) => {
+						const selected = (settings.theme ?? "system") === option.id;
+						return h(
+							"button",
+							{
+								key: option.id,
+								type: "button",
+								"aria-pressed": selected,
+								style: {
+									...settingsStyles.choiceCard,
+									...(selected ? settingsStyles.choiceCardSelected : null)
+								},
+								onClick: () => update("theme", option.id)
+							},
+							h("span", { style: settingsStyles.choiceIcon }, h(ThemeIcon, { kind: option.icon })),
+							h("span", { style: settingsStyles.choiceTitle }, t(option.labelKey)),
+							h("span", { style: settingsStyles.choiceDesc }, t(option.descKey))
+						);
+					})
+				),
+				h("h4", { style: settingsStyles.sectionTitle }, t("settings.section.highRisk")),
 				h(
 					"div",
 					{ style: settingsStyles.card },
-					h(ToggleRow, {
-						first: true,
-						parent: true,
-						label: t("settings.enabled"),
-						hint: t("settings.enabledDesc"),
-						checked: settings.enabled,
-						onChange: (value) => {
-							if (!value) {
-								setConfirmDisable(true);
-								return;
+					h(
+						"div",
+						{ style: { ...settingsStyles.settingRow, borderTop: "none" } },
+						h(
+							"span",
+							{ style: settingsStyles.text },
+							h("span", { style: { ...settingsStyles.label, fontWeight: 600 } }, t("settings.enabled")),
+							h("span", { style: settingsStyles.hint }, t("settings.enabledDesc"))
+						),
+						h(ToggleSwitch, {
+							checked: settings.enabled,
+							onChange: (value) => {
+								if (!value) {
+									setConfirmDisable(true);
+									return;
+								}
+								update("enabled", value);
 							}
-							update("enabled", value);
-						}
-					}),
+						})
+					),
 					h(
 						"div",
 						{
@@ -987,7 +1252,7 @@ window.__ModuleLoader__.load({
 						)
 					)
 				),
-				h("h4", { style: settingsStyles.sectionTitle }, t("settings.colors")),
+				h("h4", { style: settingsStyles.sectionTitle }, t("settings.section.color")),
 				h(
 					"div",
 					{ style: settingsStyles.swatchRow },
@@ -1030,10 +1295,10 @@ window.__ModuleLoader__.load({
 					)
 				),
 				h("p", { style: settingsStyles.hint }, t("settings.colorHint")),
-				h("h4", { style: settingsStyles.sectionTitle }, t("settings.outside")),
+				h("h4", { style: settingsStyles.sectionTitle }, t("settings.section.approval")),
 				h(
 					"div",
-					{ style: settingsStyles.outsideGrid, role: "radiogroup" },
+					{ style: settingsStyles.themeGrid, role: "radiogroup" },
 					OUTSIDE_OPTIONS.map((option) => {
 						const selected = (settings.outside ?? "notification") === option.id;
 						return h(
@@ -1044,30 +1309,124 @@ window.__ModuleLoader__.load({
 								role: "radio",
 								"aria-checked": selected,
 								style: {
-									...settingsStyles.outsideOption,
-									...(selected ? settingsStyles.outsideOptionSelected : null)
+									...settingsStyles.choiceCard,
+									...(selected ? settingsStyles.choiceCardSelected : null)
 								},
 								onClick: () => update("outside", option.id)
 							},
-							h(
-								"span",
-								{ style: settingsStyles.outsideText },
-								h("span", { style: settingsStyles.outsideTitle }, t(option.labelKey)),
-								h("span", { style: settingsStyles.outsideDesc }, t(option.descKey))
-							)
+							h("span", { style: settingsStyles.choiceTitle }, t(option.labelKey)),
+							h("span", { style: settingsStyles.choiceDesc }, t(option.descKey))
 						);
 					})
 				),
+				h("h4", { style: settingsStyles.sectionTitle }, t("settings.section.question")),
+				h(
+					"div",
+					{ style: settingsStyles.gridTwo, role: "radiogroup" },
+					QUESTION_OPTIONS.map((option) => {
+						const current =
+							settings.questionMode ??
+							(settings.questionNotify === false ? "off" : "bubble");
+						const selected = current === option.id;
+						return h(
+							"button",
+							{
+								key: option.id,
+								type: "button",
+								role: "radio",
+								"aria-checked": selected,
+								style: {
+									...settingsStyles.choiceCard,
+									...(selected ? settingsStyles.choiceCardSelected : null)
+								},
+								onClick: () => update("questionMode", option.id)
+							},
+							h("span", { style: settingsStyles.choiceTitle }, t(option.labelKey)),
+							h("span", { style: settingsStyles.choiceDesc }, t(option.descKey))
+						);
+					})
+				),
+				h("h4", { style: settingsStyles.sectionTitle }, t("settings.section.floating")),
 				h(
 					"div",
 					{ style: settingsStyles.card },
-					h(ToggleRow, {
-						first: true,
-						label: t("settings.questionNotify"),
-						hint: t("settings.questionNotifyDesc"),
-						checked: settings.questionNotify !== false,
-						onChange: (value) => update("questionNotify", value)
-					})
+					h(
+						"div",
+						{ style: { ...settingsStyles.settingRow, borderTop: "none" } },
+						h(
+							"span",
+							{ style: settingsStyles.text },
+							h("span", { style: settingsStyles.label }, t("settings.floating.enabled")),
+							h("span", { style: settingsStyles.hint }, t("settings.floating.enabledDesc"))
+						),
+						h(ToggleSwitch, {
+							checked: settings.floatingEnabled === true,
+							onChange: (value) => update("floatingEnabled", value)
+						})
+					),
+					h(
+						"div",
+						{ style: settingsStyles.settingRow },
+						h(
+							"span",
+							{ style: settingsStyles.text },
+							h("span", { style: settingsStyles.label }, t("settings.floating.width")),
+							h("span", { style: settingsStyles.hint }, t("settings.floating.widthDesc"))
+						),
+						h("input", {
+							type: "number",
+							min: 320,
+							max: 900,
+							step: 10,
+							value: settings.floatingWidth ?? 480,
+							style: settingsStyles.numberInput,
+							onChange: (event) => {
+								const next = Number(event.currentTarget.value);
+								if (Number.isFinite(next)) {
+									update("floatingWidth", Math.min(900, Math.max(320, Math.round(next))));
+								}
+							}
+						})
+					),
+					h(
+						"div",
+						{
+							style: {
+								...settingsStyles.settingRow,
+								flexDirection: "column",
+								alignItems: "stretch"
+							}
+						},
+						h(
+							"span",
+							{ style: settingsStyles.text },
+							h("span", { style: settingsStyles.label }, t("settings.floating.condition"))
+						),
+						h(
+							"div",
+							{ style: settingsStyles.gridTwo, role: "radiogroup" },
+							FLOATING_CONDITIONS.map((option) => {
+								const selected = (settings.floatingCondition ?? "hidden") === option.id;
+								return h(
+									"button",
+									{
+										key: option.id,
+										type: "button",
+										role: "radio",
+										"aria-checked": selected,
+										style: {
+											...settingsStyles.choiceCard,
+											minHeight: 86,
+											...(selected ? settingsStyles.choiceCardSelected : null)
+										},
+										onClick: () => update("floatingCondition", option.id)
+									},
+									h("span", { style: settingsStyles.choiceTitle }, t(option.labelKey)),
+									h("span", { style: settingsStyles.choiceDesc }, t(option.descKey))
+								);
+							})
+						)
+					)
 				),
 				h(
 					"div",

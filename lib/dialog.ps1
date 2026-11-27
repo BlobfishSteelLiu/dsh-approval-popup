@@ -6,10 +6,28 @@
 $ErrorActionPreference = 'Stop'
 
 try {
+    Add-Type @'
+using System.Runtime.InteropServices;
+public static class DshDpi {
+    [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+}
+'@
+    [void][DshDpi]::SetProcessDPIAware()
+
     Add-Type -AssemblyName System.Windows.Forms
     Add-Type -AssemblyName System.Drawing
     Add-Type -AssemblyName Microsoft.VisualBasic
     [System.Windows.Forms.Application]::EnableVisualStyles()
+    $dialogLogHome = $env:DSH_HOME
+    if ([string]::IsNullOrWhiteSpace($dialogLogHome)) { $dialogLogHome = Join-Path $HOME '.dsh' }
+    $dialogErrorLog = Join-Path $dialogLogHome 'dsh-approval-popup\dialog-error.log'
+    [System.Windows.Forms.Application]::SetUnhandledExceptionMode([System.Windows.Forms.UnhandledExceptionMode]::CatchException)
+    [System.Windows.Forms.Application]::add_ThreadException({
+        param($sender, $args)
+        try {
+            [IO.File]::AppendAllText($dialogErrorLog, "$(Get-Date -Format o)`n$($args.Exception.ToString())`n`n")
+        } catch {}
+    })
 
     Add-Type @'
 using System;
@@ -62,6 +80,11 @@ public class DshApprovalForm : Form {
     public Color BorderColor = Color.FromArgb(226, 232, 240);
     public int CornerRadius = 18;
     public int AccentHeight = 6;
+    public float LayoutScale = 1f;
+
+    private int S(int value) {
+        return (int)Math.Round(value * LayoutScale);
+    }
 
     public DshApprovalForm() {
         FormBorderStyle = FormBorderStyle.None;
@@ -86,7 +109,7 @@ public class DshApprovalForm : Form {
 
     protected override void OnResize(EventArgs e) {
         base.OnResize(e);
-        using (var path = DshUi.RoundRect(new Rectangle(0, 0, Width, Height), CornerRadius)) {
+        using (var path = DshUi.RoundRect(new Rectangle(0, 0, Width, Height), S(CornerRadius))) {
             var old = Region;
             Region = new Region(path);
             if (old != null) old.Dispose();
@@ -94,13 +117,16 @@ public class DshApprovalForm : Form {
     }
 
     protected override void OnPaint(PaintEventArgs e) {
+        if (Width <= 1 || Height <= 1) return;
         base.OnPaint(e);
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+        e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
         var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-        using (var path = DshUi.RoundRect(rect, CornerRadius)) {
+        using (var path = DshUi.RoundRect(rect, S(CornerRadius))) {
             using (var pen = new Pen(BorderColor, 1)) e.Graphics.DrawPath(pen, path);
             e.Graphics.SetClip(path);
-            using (var brush = new SolidBrush(AccentColor)) e.Graphics.FillRectangle(brush, 0, 0, Width, AccentHeight);
+            using (var brush = new SolidBrush(AccentColor)) e.Graphics.FillRectangle(brush, 0, 0, Width, S(AccentHeight));
             e.Graphics.ResetClip();
         }
     }
@@ -120,6 +146,7 @@ public class DshBadge : Control {
     }
 
     protected override void OnPaint(PaintEventArgs e) {
+        if (Width <= 1 || Height <= 1) return;
         e.Graphics.Clear(Parent != null ? Parent.BackColor : SystemColors.Control);
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
         using (var brush = new SolidBrush(FillColor)) e.Graphics.FillEllipse(brush, 0, 0, Width - 1, Height - 1);
@@ -145,6 +172,7 @@ public class DshPill : Control {
     }
 
     protected override void OnPaint(PaintEventArgs e) {
+        if (Width <= 1 || Height <= 1) return;
         e.Graphics.Clear(Parent != null ? Parent.BackColor : SystemColors.Control);
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
         var rect = new Rectangle(0, 0, Width - 1, Height - 1);
@@ -170,8 +198,11 @@ public class DshCardPanel : Panel {
     }
 
     protected override void OnPaint(PaintEventArgs e) {
+        if (Width <= 1 || Height <= 1) return;
         base.OnPaint(e);
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+        e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
         var rect = new Rectangle(0, 0, Width - 1, Height - 1);
         using (var path = DshUi.RoundRect(rect, Radius)) {
             using (var brush = new SolidBrush(FillColor)) e.Graphics.FillPath(brush, path);
@@ -206,6 +237,7 @@ public class DshRoundButton : Button {
     protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
 
     protected override void OnPaint(PaintEventArgs e) {
+        if (Width <= 1 || Height <= 1) return;
         e.Graphics.Clear(Parent != null ? Parent.BackColor : SystemColors.Control);
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
         var rect = new Rectangle(0, 0, Width - 1, Height - 1);
@@ -262,6 +294,8 @@ public class DshRoundButton : Button {
     $labelFont = New-Object System.Drawing.Font($fontName, 8.5, [System.Drawing.FontStyle]::Regular)
     $valueFont = New-Object System.Drawing.Font($fontName, 9.5, [System.Drawing.FontStyle]::Regular)
     $buttonFont = New-Object System.Drawing.Font($fontName, 9.5, [System.Drawing.FontStyle]::Bold)
+    $scale = [System.Drawing.Graphics]::FromHwnd([IntPtr]::Zero).DpiX / 96
+    function S([double]$value) { return [int][Math]::Round($value * $scale) }
 
     [void][DshApprovalNative]::SetCurrentProcessExplicitAppUserModelID('BlobfishSteelLiu.DshApprovalPopup')
 
@@ -279,7 +313,8 @@ public class DshRoundButton : Button {
     $form.Text = [string]$payload.title
     $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96)
-    $form.ClientSize = New-Object System.Drawing.Size(620, 470)
+    $form.LayoutScale = $scale
+    $form.ClientSize = New-Object System.Drawing.Size((S 620), (S 470))
     $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
     $workArea = [System.Windows.Forms.Screen]::FromPoint([System.Windows.Forms.Cursor]::Position).WorkingArea
     $left = $workArea.Left + [int](($workArea.Width - $form.Width) / 2)
@@ -297,14 +332,14 @@ public class DshRoundButton : Button {
     $form.BackColor = $surface
 
     $badge = New-Object DshBadge
-    $badge.Location = New-Object System.Drawing.Point(28, 30)
-    $badge.Size = New-Object System.Drawing.Size(44, 44)
+    $badge.Location = New-Object System.Drawing.Point((S 28), (S 30))
+    $badge.Size = New-Object System.Drawing.Size((S 44), (S 44))
     $badge.FillColor = $accent
     $badge.GlyphColor = $accentText
 
     $title = New-Object System.Windows.Forms.Label
-    $title.Location = New-Object System.Drawing.Point(88, 26)
-    $title.Size = New-Object System.Drawing.Size(400, 30)
+    $title.Location = New-Object System.Drawing.Point((S 88), (S 26))
+    $title.Size = New-Object System.Drawing.Size((S 400), (S 30))
     $title.Font = $titleFont
     $title.ForeColor = $titleColor
     $title.AutoEllipsis = $true
@@ -316,16 +351,16 @@ public class DshRoundButton : Button {
     }
 
     $subtitle = New-Object System.Windows.Forms.Label
-    $subtitle.Location = New-Object System.Drawing.Point(88, 58)
-    $subtitle.Size = New-Object System.Drawing.Size(500, 40)
+    $subtitle.Location = New-Object System.Drawing.Point((S 88), (S 58))
+    $subtitle.Size = New-Object System.Drawing.Size((S 500), (S 40))
     $subtitle.Font = $subtitleFont
     $subtitle.ForeColor = $bodyColor
     $subtitle.Text = [string]$payload.header
 
     if ($highRisk) {
         $pill = New-Object DshPill
-        $pill.Location = New-Object System.Drawing.Point(500, 30)
-        $pill.Size = New-Object System.Drawing.Size(92, 24)
+        $pill.Location = New-Object System.Drawing.Point((S 500), (S 30))
+        $pill.Size = New-Object System.Drawing.Size((S 92), (S 24))
         $pill.FillColor = [System.Drawing.Color]::FromArgb(220, 38, 38)
         $pill.TextColor = [System.Drawing.Color]::White
         $pill.Font = New-Object System.Drawing.Font($fontName, 8.5, [System.Drawing.FontStyle]::Bold)
@@ -335,8 +370,8 @@ public class DshRoundButton : Button {
     }
 
     $divider = New-Object System.Windows.Forms.Panel
-    $divider.Location = New-Object System.Drawing.Point(28, 112)
-    $divider.Size = New-Object System.Drawing.Size(564, 1)
+    $divider.Location = New-Object System.Drawing.Point((S 28), (S 112))
+    $divider.Size = New-Object System.Drawing.Size((S 564), 1)
     $divider.BackColor = $border
 
     $labels = @()
@@ -345,39 +380,40 @@ public class DshRoundButton : Button {
         @{ Label = [string]$payload.conversationLabel; Value = [string]$payload.conversation },
         @{ Label = [string]$payload.workspaceLabel; Value = [string]$payload.workspace }
     )
-    $y = 128
+    $y = S 128
     foreach ($item in $meta) {
         $label = New-Object System.Windows.Forms.Label
-        $label.Location = New-Object System.Drawing.Point(28, $y)
-        $label.Size = New-Object System.Drawing.Size(64, 20)
+        $label.Location = New-Object System.Drawing.Point((S 28), $y)
+        $label.Size = New-Object System.Drawing.Size((S 64), (S 20))
         $label.Font = $labelFont
         $label.ForeColor = $mutedColor
         $label.Text = $item.Label
         $labels += $label
 
-        $valueY = $y - 1
+        $valueY = $y - [int][Math]::Round(1 * $scale)
         $value = New-Object System.Windows.Forms.Label
-        $value.Location = New-Object System.Drawing.Point(96, $valueY)
-        $value.Size = New-Object System.Drawing.Size(496, 22)
+        $value.Location = New-Object System.Drawing.Point((S 96), $valueY)
+        $value.Size = New-Object System.Drawing.Size((S 496), (S 22))
         $value.Font = $valueFont
         $value.ForeColor = $bodyColor
         $value.AutoEllipsis = $true
         $value.Text = $item.Value
         $values += $value
-        $y += 30
+        $y += S 30
     }
 
     $toolLabel = New-Object System.Windows.Forms.Label
-    $toolLabel.Location = New-Object System.Drawing.Point(28, $y)
-    $toolLabel.Size = New-Object System.Drawing.Size(64, 20)
+    $toolLabel.Location = New-Object System.Drawing.Point((S 28), $y)
+    $toolLabel.Size = New-Object System.Drawing.Size((S 64), (S 20))
     $toolLabel.Font = $labelFont
     $toolLabel.ForeColor = $mutedColor
     $toolLabel.Text = [string]$payload.toolLabel
 
-    $toolPillY = $y - 2
+    $toolPillY = $y - [int][Math]::Round(2 * $scale)
     $toolPill = New-Object DshPill
-    $toolPill.Location = New-Object System.Drawing.Point(96, $toolPillY)
-    $toolPill.Size = New-Object System.Drawing.Size(180, 24)
+    $toolPill.Location = New-Object System.Drawing.Point((S 96), $toolPillY)
+    $toolPill.Size = New-Object System.Drawing.Size((S 180), (S 24))
+    $toolPill.Radius = S 12
     $toolPill.Font = New-Object System.Drawing.Font($fontName, 8.5, [System.Drawing.FontStyle]::Regular)
     $toolPill.Text = [string]$payload.tool
     if ($highRisk) {
@@ -390,21 +426,22 @@ public class DshRoundButton : Button {
     }
 
     $reasonLabel = New-Object System.Windows.Forms.Label
-    $reasonLabel.Location = New-Object System.Drawing.Point(28, 222)
-    $reasonLabel.Size = New-Object System.Drawing.Size(564, 20)
+    $reasonLabel.Location = New-Object System.Drawing.Point((S 28), (S 222))
+    $reasonLabel.Size = New-Object System.Drawing.Size((S 564), (S 20))
     $reasonLabel.Font = New-Object System.Drawing.Font($fontName, 9, [System.Drawing.FontStyle]::Bold)
     $reasonLabel.ForeColor = $titleColor
     $reasonLabel.Text = [string]$payload.reasonLabel
 
     $reasonCard = New-Object DshCardPanel
-    $reasonCard.Location = New-Object System.Drawing.Point(28, 246)
-    $reasonCard.Size = New-Object System.Drawing.Size(564, 150)
+    $reasonCard.Location = New-Object System.Drawing.Point((S 28), (S 246))
+    $reasonCard.Size = New-Object System.Drawing.Size((S 564), (S 150))
+    $reasonCard.Radius = S 12
     $reasonCard.FillColor = [System.Drawing.Color]::White
     $reasonCard.BorderColor = $border
 
     $reasonBox = New-Object System.Windows.Forms.TextBox
-    $reasonBox.Location = New-Object System.Drawing.Point(12, 12)
-    $reasonBox.Size = New-Object System.Drawing.Size(540, 126)
+    $reasonBox.Location = New-Object System.Drawing.Point((S 12), (S 12))
+    $reasonBox.Size = New-Object System.Drawing.Size((S 540), (S 126))
     $reasonBox.Multiline = $true
     $reasonBox.ReadOnly = $true
     $reasonBox.WordWrap = $true
@@ -423,18 +460,18 @@ public class DshRoundButton : Button {
     $reasonCard.Controls.Add($reasonBox)
 
     $hint = New-Object System.Windows.Forms.Label
-    $hint.Location = New-Object System.Drawing.Point(28, 400)
-    $hint.Size = New-Object System.Drawing.Size(288, 38)
+    $hint.Location = New-Object System.Drawing.Point((S 28), (S 400))
+    $hint.Size = New-Object System.Drawing.Size((S 288), (S 38))
     $hint.Font = $labelFont
     $hint.ForeColor = $mutedColor
     $hint.Text = [string]$payload.hint
 
     $rejectButton = New-Object DshRoundButton
-    $rejectButton.Location = New-Object System.Drawing.Point(326, 400)
-    $rejectButton.Size = New-Object System.Drawing.Size(130, 40)
+    $rejectButton.Location = New-Object System.Drawing.Point((S 326), (S 400))
+    $rejectButton.Size = New-Object System.Drawing.Size((S 130), (S 40))
     $rejectButton.Text = [string]$payload.reject
     $rejectButton.Font = $buttonFont
-    $rejectButton.Radius = 20
+    $rejectButton.Radius = S 20
     $rejectButton.FillColor = [System.Drawing.Color]::White
     $rejectButton.HoverColor = [System.Drawing.Color]::FromArgb(248, 250, 252)
     $rejectButton.TextColor = $bodyColor
@@ -442,11 +479,11 @@ public class DshRoundButton : Button {
     $rejectButton.TabIndex = 1
 
     $allowButton = New-Object DshRoundButton
-    $allowButton.Location = New-Object System.Drawing.Point(468, 400)
-    $allowButton.Size = New-Object System.Drawing.Size(130, 40)
+    $allowButton.Location = New-Object System.Drawing.Point((S 468), (S 400))
+    $allowButton.Size = New-Object System.Drawing.Size((S 130), (S 40))
     $allowButton.Text = [string]$payload.allow
     $allowButton.Font = $buttonFont
-    $allowButton.Radius = 20
+    $allowButton.Radius = S 20
     $allowButton.FillColor = $accent
     if ($highRisk) {
         $allowButton.HoverColor = [System.Drawing.Color]::FromArgb(185, 28, 28)
